@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "691480117131",
+    "project_id": "proyectofinalaplimovil",
+    "storage_bucket": "proyectofinalaplimovil.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:691480117131:android:f9d10d6da322a08790b98e",
+        "android_client_info": {
+          "package_name": "edu.unicauca.proyecto_final"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXwIBtHPa3sdUbbqwZEDCKYfXidWfJA5o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

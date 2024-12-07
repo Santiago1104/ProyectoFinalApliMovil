@@ -91,17 +91,29 @@ class SiteListPage extends StatelessWidget {
     );
   }
 
-  // Función para leer los sitios más recientes, ordenados por fecha
+  // Función para leer todos los sitios, ordenados por fecha
   static Stream<List<Site>> readRecentSites() {
     return FirebaseFirestore.instance
         .collection('sitios')
         .orderBy('fecha_registro', descending: true) // Ordenar por la fecha de registro más reciente
-        .limit(1) // Limitar a solo el sitio más reciente
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         return Site.fromFirestore(doc.data(), doc.id);
       }).toList();
+    });
+  }
+
+  // Función para eliminar un sitio
+  void deleteSite(String siteId) {
+    FirebaseFirestore.instance.collection('sitios').doc(siteId).delete();
+  }
+
+  // Función para agregar un nuevo sitio
+  void addSite(String siteName) {
+    FirebaseFirestore.instance.collection('sitios').add({
+      'nombre': siteName,
+      'fecha_registro': FieldValue.serverTimestamp(),
     });
   }
 }

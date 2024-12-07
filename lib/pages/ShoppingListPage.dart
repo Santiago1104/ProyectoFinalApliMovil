@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/ShoppingList.dart';
 import '../models/Product.dart';
 import '../models/Site.dart';
+import 'EditProductPage.dart';  // Importa la nueva página
 
 class ShoppingListPage extends StatefulWidget {
   @override
@@ -113,10 +114,28 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                     final site = siteSnapshot.data!;
                                     return Dismissible(
                                       key: ValueKey(product.id),
-                                      onDismissed: (direction) {
-                                        deleteProduct(shoppingList.id, product.id);
+                                      confirmDismiss: (direction) async {
+                                        // Permitir eliminar solo si no está marcado
+                                        if (!product.isChecked) {
+                                          return true;
+                                        }
+                                        return false; // No permitir eliminar si está marcado
                                       },
-                                      background: Container(color: Colors.red),
+                                      onDismissed: (direction) {
+                                        if (!product.isChecked) {
+                                          deleteProduct(shoppingList.id, product.id);
+                                        }
+                                      },
+                                      background: Container(
+                                        color: Colors.red,
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(left: 16.0),
+                                            child: Icon(Icons.delete, color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
                                       child: ListTile(
                                         title: Text(product.name),
                                         subtitle: Text('Lugar: ${site.name}'),
@@ -127,6 +146,17 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                             setState(() {}); // Volver a renderizar para reflejar los cambios
                                           },
                                         ),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => EditProductPage(
+                                                listId: shoppingList.id,
+                                                productId: product.id,
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       ),
                                     );
                                   } else {
@@ -141,6 +171,15 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                         }
                       },
                     ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Aquí se añadirá la lógica para redirigir a la página de añadir producto
+                        },
+                        child: Text('Añadir Producto'),
+                      ),
+                    ),
                   ],
                 );
               },
@@ -149,12 +188,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             return Center(child: CircularProgressIndicator());
           }
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Lógica para añadir nuevo producto
-        },
-        child: Icon(Icons.add),
       ),
     );
   }

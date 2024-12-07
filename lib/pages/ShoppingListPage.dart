@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/Product.dart';
 import '../models/ShoppingList.dart';
+import '../models/Product.dart';
 import '../models/Site.dart';
 
 class ShoppingListPage extends StatefulWidget {
@@ -45,6 +45,17 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       print("Error al obtener detalles del sitio: $e");
     }
     return null;
+  }
+
+  void deleteProduct(String listId, String productId) async {
+    if (listId.isNotEmpty && productId.isNotEmpty) {
+      await FirebaseFirestore.instance
+          .collection('lista_compras')
+          .doc(listId)
+          .collection('elementoslista')
+          .doc(productId)
+          .delete();
+    }
   }
 
   @override
@@ -103,9 +114,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                     return Dismissible(
                                       key: ValueKey(product.id),
                                       onDismissed: (direction) {
-                                        if (!product.isChecked) {
-                                          // Lógica para eliminar producto
-                                        }
+                                        deleteProduct(shoppingList.id, product.id);
                                       },
                                       background: Container(color: Colors.red),
                                       child: ListTile(
@@ -114,15 +123,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                         trailing: Checkbox(
                                           value: product.isChecked,
                                           onChanged: (value) async {
-                                            setState(() {
-                                              product.isChecked = value!;
-                                            });
-                                            await product.toggleChecked(); // Actualizar en Firestore
+                                            await product.toggleChecked();
+                                            setState(() {}); // Volver a renderizar para reflejar los cambios
                                           },
                                         ),
-                                        onTap: () {
-                                          // Lógica para modificar producto
-                                        },
                                       ),
                                     );
                                   } else {

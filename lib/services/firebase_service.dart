@@ -11,13 +11,14 @@ Future<String> createNewList(String name) async {
       'nombre': name,
       'FechaRegistro': DateTime.now(),
     });
-    print("Lista de compras creada.");
+    print("Lista de compras creada con ID: ${docRef.id}");
     return docRef.id; // Retornar el ID del documento creado
   } catch (e) {
     print("Error al crear la lista de compras: $e");
     throw e;
   }
 }
+
 
 
 // Leer todas las listas de compras
@@ -51,18 +52,18 @@ Future<void> deleteShoppingList(String listId) async {
 
 Future<void> addProductToList(String listId, String name, String siteId) async {
   try {
-    await database.collection('lista_compras').doc(listId).collection('elementoslista').add({
+    await FirebaseFirestore.instance.collection('lista_compras').doc(listId).collection('elementoslista').add({
       'nombre': name,
       'id_sitio': siteId,
       'marcado': false,
       'fecha_registro': DateTime.now(),
+      'IdLista': listId, // Aseguramos que el listId se almacene
     });
-    print("Producto añadido a la lista.");
+    print("Producto añadido a la lista con listId: $listId");
   } catch (e) {
     print("Error al añadir el producto: $e");
   }
 }
-
 
 // Leer productos de una lista
 Stream<List<Product>> readProducts(String listId) {
@@ -103,13 +104,14 @@ Future<String> addSite(String name) async {
       'nombre': name,
       'fecha_registro': DateTime.now(),
     });
-    print("Sitio registrado.");
+    print("Sitio registrado con ID: ${docRef.id}");
     return docRef.id; // Retornar el ID del documento creado
   } catch (e) {
     print("Error al registrar el sitio: $e");
     throw e;
   }
 }
+
 
 
 // Leer todos los sitios

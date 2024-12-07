@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/Product.dart';
 import '../models/ShoppingList.dart';
-import '../models/site.dart';
-import '../services/firebase_service.dart'; // Asegúrate de importar todos los servicios necesarios
+import '../models/Product.dart';
+import '../models/Site.dart';
+import '../services/firebase_service.dart';
 
 class CRUDTestPage extends StatelessWidget {
   const CRUDTestPage({Key? key}) : super(key: key);
@@ -11,9 +11,11 @@ class CRUDTestPage extends StatelessWidget {
     try {
       // Crear un sitio de prueba
       final siteId = await addSite('Supermercado de Prueba');
+      print("ID del sitio creado: $siteId");
 
       // Crear una lista de compras de prueba
       final shoppingListId = await createNewList('Lista de Compras de Prueba');
+      print("ID de la lista de compras creada: $shoppingListId");
 
       // Crear productos de prueba
       await addProductToList(shoppingListId, 'Producto 1', siteId);

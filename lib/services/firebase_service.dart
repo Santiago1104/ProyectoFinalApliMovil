@@ -1,63 +1,61 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import '../models/Product.dart';
 import '../models/ShoppingList.dart';
+import '../models/Product.dart';
 import '../models/Site.dart';
 
 FirebaseFirestore database = FirebaseFirestore.instance;
 
-//crear una lista
-
-Future<void> createNewList() async {
+Future<String> createNewList(String name) async {
   try {
-    await database.collection('lista_compras').add({
-      'FechaRegistro': DateTime.now().toIso8601String(),
+    DocumentReference docRef = await database.collection('lista_compras').add({
+      'nombre': name,
+      'FechaRegistro': DateTime.now(),
     });
     print("Lista de compras creada.");
+    return docRef.id; // Retornar el ID del documento creado
   } catch (e) {
     print("Error al crear la lista de compras: $e");
+    throw e;
   }
 }
 
-// leer todas las listas
 
-Stream<List<Map<String, dynamic>>> readLists() {
+// Leer todas las listas de compras
+Stream<List<ShoppingList>> readLists() {
   return database.collection('lista_compras').orderBy('FechaRegistro', descending: true).snapshots().map(
-        (snapshot) => snapshot.docs.map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>}).toList(),
+        (snapshot) => snapshot.docs.map((doc) => ShoppingList.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList(),
   );
 }
 
-
-//actualizar lista
-
+// Actualizar una lista de compras
 Future<void> updateShoppingList(ShoppingList list) async {
   try {
-    await database.collection('listas_compras').doc(list.id).update(list.toMap());
+    await database.collection('lista_compras').doc(list.id).update(list.toMap());
     print("Lista actualizada exitosamente.");
   } catch (e) {
     print("Error al actualizar la lista: $e");
   }
 }
 
-// eliminar lista
-
+// Eliminar una lista de compras
 Future<void> deleteShoppingList(String listId) async {
   try {
-    await database.collection('listas_compras').doc(listId).delete();
+    await database.collection('lista_compras').doc(listId).delete();
     print("Lista eliminada exitosamente.");
   } catch (e) {
     print("Error al eliminar la lista: $e");
   }
 }
 
-// crear  producto
+// Crear un producto en una lista
 
-Future<void> addProductToList(String idLista, String nombreProducto, String idSitio) async {
+Future<void> addProductToList(String listId, String name, String siteId) async {
   try {
-    await database.collection('elementoslista').add({
-      'IdLista': idLista,
-      'Nombre': nombreProducto,
-      'IdSitio': idSitio,
+    await database.collection('lista_compras').doc(listId).collection('elementoslista').add({
+      'nombre': name,
+      'id_sitio': siteId,
+      'marcado': false,
+      'fecha_registro': DateTime.now(),
     });
     print("Producto añadido a la lista.");
   } catch (e) {
@@ -66,23 +64,21 @@ Future<void> addProductToList(String idLista, String nombreProducto, String idSi
 }
 
 
-// leer productos de lista
-
+// Leer productos de una lista
 Stream<List<Product>> readProducts(String listId) {
-  return database.collection('listas_compras').doc(listId).collection('elementos').snapshots().map((snapshot) {
+  return database.collection('lista_compras').doc(listId).collection('elementoslista').snapshots().map((snapshot) {
     return snapshot.docs.map((doc) {
       return Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
     }).toList();
   });
 }
 
-//actualizar productos de lista
-
-Future<void> updateProduct(String idProducto, String nuevoNombre, String nuevoIdSitio) async {
+// Actualizar un producto
+Future<void> updateProduct(String productId, String listId, String name, String siteId) async {
   try {
-    await database.collection('elementoslista').doc(idProducto).update({
-      'Nombre': nuevoNombre,
-      'IdSitio': nuevoIdSitio,
+    await database.collection('lista_compras').doc(listId).collection('elementoslista').doc(productId).update({
+      'nombre': name,
+      'id_sitio': siteId,
     });
     print("Producto actualizado.");
   } catch (e) {
@@ -90,36 +86,31 @@ Future<void> updateProduct(String idProducto, String nuevoNombre, String nuevoId
   }
 }
 
-
-//eliminar productos
-
-Future<void> deleteProduct(String idProducto) async {
+// Eliminar un producto
+Future<void> deleteProduct(String productId, String listId) async {
   try {
-    await database.collection('elementoslista').doc(idProducto).delete();
+    await database.collection('lista_compras').doc(listId).collection('elementoslista').doc(productId).delete();
     print("Producto eliminado.");
   } catch (e) {
     print("Error al eliminar el producto: $e");
   }
 }
 
-
-// Crear un sitio
-
-Future<void> addSite(String nombreSitio) async {
+// Crear un nuevo sitio
+Future<String> addSite(String name) async {
   try {
-    Site newSite = Site(
-      id: '',
-      name: nombreSitio,
-      date: DateTime.now(),
-    );
-
-    await database.collection('sitios').add(newSite.toMap());
-
+    DocumentReference docRef = await database.collection('sitios').add({
+      'nombre': name,
+      'fecha_registro': DateTime.now(),
+    });
     print("Sitio registrado.");
+    return docRef.id; // Retornar el ID del documento creado
   } catch (e) {
     print("Error al registrar el sitio: $e");
+    throw e;
   }
 }
+
 
 // Leer todos los sitios
 Stream<List<Site>> readSites() {
@@ -127,13 +118,13 @@ Stream<List<Site>> readSites() {
       .orderBy('fecha_registro', descending: true)
       .snapshots()
       .map((snapshot) => snapshot.docs
-      .map((doc) => Site.fromFirestore(doc.data(), doc.id))
+      .map((doc) => Site.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
       .toList());
 }
+
 // Actualizar un sitio
 Future<void> updateSite(Site site) async {
   try {
-    // Usar el ID del sitio para encontrar el documento y actualizarlo
     await database.collection('sitios').doc(site.id).update(site.toMap());
     print("Sitio actualizado.");
   } catch (e) {
@@ -144,20 +135,9 @@ Future<void> updateSite(Site site) async {
 // Eliminar un sitio
 Future<void> deleteSite(String siteId) async {
   try {
-    // Usar el ID del sitio para eliminar el documento de Firestore
     await database.collection('sitios').doc(siteId).delete();
     print("Sitio eliminado.");
   } catch (e) {
     print("Error al eliminar el sitio: $e");
   }
 }
-
-
-
-
-
-
-
-
-
-

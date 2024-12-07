@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../pages/CRUDTestPage.dart';  // Asegúrate de que la página esté importada
+import '../pages/CRUDTestPage.dart';
+import '../pages/ShoppingListPage.dart';
 
 // Importaciones de Firebase
 import 'package:firebase_core/firebase_core.dart';
@@ -26,7 +27,8 @@ class MyApp extends StatelessWidget {
       ),
       home: const MyHomePage(title: 'Shopping List Tracker'),
       routes: {
-        '/crud-test': (context) => CRUDTestPage(),  // Agregar la ruta para CRUDTestPage
+        '/crud-test': (context) => CRUDTestPage(), // Ruta para la página CRUD
+        '/shopping-list': (context) =>ShoppingListPage(), // Ruta para la lista de compras
       },
     );
   }
@@ -50,12 +52,12 @@ class MyHomePage extends StatelessWidget {
           children: <Widget>[
             ElevatedButton(
               onPressed: () {
-                // Navegar a la lista de sitios
-                Navigator.pushNamed(context, '/site-list');
+                // Navegar a la página de la lista de compras
+                Navigator.pushNamed(context, '/shopping-list');
               },
-              child: const Text('Ir a la Lista de Sitios'),
+              child: const Text('Ir a la Lista de Compras'),
             ),
-            const SizedBox(height: 20),  // Espacio entre botones
+            const SizedBox(height: 20), // Espacio entre botones
             ElevatedButton(
               onPressed: () {
                 // Navegar a la página de prueba CRUD

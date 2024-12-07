@@ -28,6 +28,7 @@ class _CRUDTestPageState extends State<CRUDTestPage> {
   // Crear nueva lista
   void _createNewList() async {
     await createNewList();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lista de compras creada")));
   }
 
   // Agregar producto a una lista
@@ -46,6 +47,18 @@ class _CRUDTestPageState extends State<CRUDTestPage> {
     if (_siteNameController.text.isNotEmpty) {
       await addSite(_siteNameController.text);
       _siteNameController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Sitio registrado")));
+    }
+  }
+
+  // Clonar una lista
+  void _cloneShoppingList() async {
+    if (selectedListId != null) {
+      await cloneShoppingList(selectedListId!);  // Usa el id de la lista seleccionada
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lista clonada")));
+      setState(() {});
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Por favor, selecciona una lista")));
     }
   }
 
@@ -83,7 +96,7 @@ class _CRUDTestPageState extends State<CRUDTestPage> {
                     controller: _productNameController,
                     decoration: InputDecoration(labelText: "Nombre del Producto"),
                   ),
-                  StreamBuilder<List<Map<String, dynamic>>>(
+                  StreamBuilder<List<Map<String, dynamic>>>(  // Muestra las listas disponibles
                     stream: readLists(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -113,7 +126,7 @@ class _CRUDTestPageState extends State<CRUDTestPage> {
                   ),
                   SizedBox(height: 10),
 
-                  StreamBuilder<List<Site>>(
+                  StreamBuilder<List<Site>>(  // Muestra los sitios disponibles
                     stream: readSites(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -175,7 +188,7 @@ class _CRUDTestPageState extends State<CRUDTestPage> {
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
-                  StreamBuilder<List<Map<String, dynamic>>>(
+                  StreamBuilder<List<Map<String, dynamic>>>(  // Muestra las listas de compras
                     stream: readLists(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -205,7 +218,7 @@ class _CRUDTestPageState extends State<CRUDTestPage> {
                     },
                   ),
                   if (selectedListId != null)
-                    StreamBuilder<List<Product>>(
+                    StreamBuilder<List<Product>>(  // Muestra los productos de la lista seleccionada
                       stream: readProducts(selectedListId!),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -228,6 +241,21 @@ class _CRUDTestPageState extends State<CRUDTestPage> {
                         );
                       },
                     ),
+                ],
+              ),
+            ),
+
+            // Clonar lista de compras
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Clonar Lista de Compras", style: TextStyle(fontSize: 18)),
+                  ElevatedButton(
+                    onPressed: _cloneShoppingList,
+                    child: Text("Clonar Lista"),
+                  ),
                 ],
               ),
             ),

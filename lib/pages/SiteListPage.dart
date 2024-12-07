@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/Site.dart';
 import '../services/firebase_service.dart';
 
-
 class SiteListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -12,7 +11,7 @@ class SiteListPage extends StatelessWidget {
         title: Text('Lista de Sitios'),
       ),
       body: StreamBuilder<List<Site>>(
-        stream: readSites(), // El stream que lee los sitios
+        stream: readRecentSites(), // Usamos el stream modificado para leer sitios recientes
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -90,5 +89,19 @@ class SiteListPage extends StatelessWidget {
         );
       },
     );
+  }
+
+  // Función para leer los sitios más recientes, ordenados por fecha
+  static Stream<List<Site>> readRecentSites() {
+    return FirebaseFirestore.instance
+        .collection('sitios')
+        .orderBy('fecha_registro', descending: true) // Ordenar por la fecha de registro más reciente
+        .limit(1) // Limitar a solo el sitio más reciente
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Site.fromFirestore(doc.data(), doc.id);
+      }).toList();
+    });
   }
 }

@@ -1,67 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/Product.dart';
 import '../models/Site.dart';
-import '../models/ShoppingList.dart';
 import '../services/firebase_service.dart';
 
-class EditProductPage extends StatefulWidget {
+class CreateProductPage extends StatefulWidget {
   final String listId;
-  final String productId;
 
-  EditProductPage({required this.listId, required this.productId});
+  CreateProductPage({required this.listId});
 
   @override
-  _EditProductPageState createState() => _EditProductPageState();
+  _CreateProductPageState createState() => _CreateProductPageState();
 }
 
-class _EditProductPageState extends State<EditProductPage> {
+class _CreateProductPageState extends State<CreateProductPage> {
   late String productName;
-  late String siteId;
+  late String selectedSiteId;
   late String siteName;
   final _formKey = GlobalKey<FormState>();
   List<Site> availableSites = []; // Lista para almacenar sitios disponibles
-  String? selectedSiteId;
 
-  // Cargar los detalles del producto
-  Future<void> loadProductData() async {
-    try {
-      DocumentSnapshot productSnapshot = await FirebaseFirestore.instance
-          .collection('lista_compras')
-          .doc(widget.listId)
-          .collection('elementoslista')
-          .doc(widget.productId)
-          .get();
-
-      if (productSnapshot.exists) {
-        Product product = Product.fromFirestore(productSnapshot.data() as Map<String, dynamic>, widget.productId);
-
-        setState(() {
-          productName = product.name;
-          siteId = product.siteId;
-          selectedSiteId = siteId; // Inicializar con el sitio actual
-          loadSiteData(siteId);
-        });
-      }
-    } catch (e) {
-      print("Error al cargar los datos del producto: $e");
-    }
-  }
-
-  // Cargar los detalles del sitio
-  Future<void> loadSiteData(String siteId) async {
-    try {
-      DocumentSnapshot siteSnapshot = await FirebaseFirestore.instance.collection('sitios').doc(siteId).get();
-
-      if (siteSnapshot.exists) {
-        Site site = Site.fromFirestore(siteSnapshot.data() as Map<String, dynamic>, siteId);
-        setState(() {
-          siteName = site.name;
-        });
-      }
-    } catch (e) {
-      print("Error al cargar los datos del sitio: $e");
-    }
+  @override
+  void initState() {
+    super.initState();
+    productName = '';
+    selectedSiteId = '';
+    siteName = '';
+    loadAvailableSites(); // Cargar sitios disponibles
   }
 
   // Cargar todos los sitios disponibles
@@ -81,37 +45,34 @@ class _EditProductPageState extends State<EditProductPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    productName = '';
-    siteId = '';
-    siteName = '';
-    selectedSiteId = '';
-    loadProductData();
-    loadAvailableSites(); // Cargar sitios disponibles
-  }
-
-  // Guardar cambios
-  void saveChanges() async {
+  // Guardar el nuevo producto
+  void saveProduct() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // Actualizar el producto
-        await updateProduct(widget.productId, widget.listId, productName, selectedSiteId!);
+        // Agregar el producto en Firestore
+        await FirebaseFirestore.instance.collection('lista_compras')
+            .doc(widget.listId)
+            .collection('elementoslista')
+            .add({
+          'name': productName,
+          'siteId': selectedSiteId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
         Navigator.pop(context);  // Volver a la página anterior
       } catch (e) {
-        print("Error al guardar los cambios: $e");
+        print("Error al guardar el producto: $e");
       }
     }
   }
 
-  // Cancelar cambios
-  void cancelChanges() {
+  // Cancelar y regresar
+  void cancelCreation() {
     Navigator.pop(context);  // Volver a la página anterior sin guardar
   }
 
-  // Añadir un nuevo sitio
-  void addNewSite() async {
+  // Añadir un nuevo sitio (como en la página de editar)
+  void addNewSite() {
     // Puedes redirigir a una página para crear un nuevo sitio o abrir un cuadro de diálogo
     // Aquí solo mostramos un mensaje como ejemplo
     print('Añadir un nuevo sitio');
@@ -121,7 +82,7 @@ class _EditProductPageState extends State<EditProductPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Editar Producto'),
+        title: Text('Crear Producto'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -132,7 +93,6 @@ class _EditProductPageState extends State<EditProductPage> {
             children: [
               // Campo para el nombre del producto
               TextFormField(
-                initialValue: productName,
                 decoration: InputDecoration(labelText: 'Nombre del Producto'),
                 onChanged: (value) {
                   setState(() {
@@ -149,7 +109,7 @@ class _EditProductPageState extends State<EditProductPage> {
 
               // Campo para el sitio donde se va a comprar el producto
               DropdownButtonFormField<String>(
-                value: selectedSiteId,
+                value: selectedSiteId.isEmpty ? null : selectedSiteId,
                 decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
                 items: availableSites.map((site) {
                   return DropdownMenuItem<String>(
@@ -178,11 +138,11 @@ class _EditProductPageState extends State<EditProductPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
-                    onPressed: saveChanges,
+                    onPressed: saveProduct,
                     child: Text('Guardar'),
                   ),
                   ElevatedButton(
-                    onPressed: cancelChanges,
+                    onPressed: cancelCreation,
                     child: Text('Cancelar'),
                   ),
                   IconButton(

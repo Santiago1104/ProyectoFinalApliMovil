@@ -4,6 +4,7 @@ import '../models/ShoppingList.dart';
 import '../models/Product.dart';
 import '../models/Site.dart';
 import 'EditProductPage.dart';  // Importa la nueva página
+import 'CreateProductPage.dart';  // Asegúrate de importar esta página
 
 class ShoppingListPage extends StatefulWidget {
   @override
@@ -102,7 +103,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                             itemCount: products.length,
                             itemBuilder: (context, index) {
                               final product = products[index];
-                              return FutureBuilder<Site?>(
+                              return FutureBuilder<Site?>(  // Cargar detalles del sitio
                                 future: getSiteDetails(product.siteId),
                                 builder: (context, siteSnapshot) {
                                   if (siteSnapshot.hasError) {
@@ -115,11 +116,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                     return Dismissible(
                                       key: ValueKey(product.id),
                                       confirmDismiss: (direction) async {
-                                        // Permitir eliminar solo si no está marcado
                                         if (!product.isChecked) {
                                           return true;
                                         }
-                                        return false; // No permitir eliminar si está marcado
+                                        return false;
                                       },
                                       onDismissed: (direction) {
                                         if (!product.isChecked) {
@@ -143,7 +143,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                           value: product.isChecked,
                                           onChanged: (value) async {
                                             await product.toggleChecked();
-                                            setState(() {}); // Volver a renderizar para reflejar los cambios
+                                            setState(() {});
                                           },
                                         ),
                                         onTap: () {
@@ -175,7 +175,15 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          // Aquí se añadirá la lógica para redirigir a la página de añadir producto
+                          // Redirigir al usuario a la página de creación de producto
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CreateProductPage(
+                                listId: shoppingList.id, // Pasamos el ID de la lista
+                              ),
+                            ),
+                          );
                         },
                         child: Text('Añadir Producto'),
                       ),

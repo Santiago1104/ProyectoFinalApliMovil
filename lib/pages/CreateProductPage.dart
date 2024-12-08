@@ -108,34 +108,44 @@ class _CreateProductPageState extends State<CreateProductPage> {
               ),
 
               // Campo para el sitio donde se va a comprar el producto
-              DropdownButtonFormField<String>(
-                value: selectedSiteId.isEmpty ? null : selectedSiteId,
-                decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
-                items: availableSites.map((site) {
-                  return DropdownMenuItem<String>(
-                    value: site.id,
-                    child: Text(site.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedSiteId = value!;
-                    siteName = availableSites.firstWhere((site) => site.id == value).name;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor seleccione un sitio';
-                  }
-                  return null;
-                },
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedSiteId.isEmpty ? null : selectedSiteId,
+                      decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
+                      items: availableSites.map((site) {
+                        return DropdownMenuItem<String>(
+                          value: site.id,
+                          child: Text(site.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedSiteId = value!;
+                          siteName = availableSites.firstWhere((site) => site.id == value).name;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor seleccione un sitio';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: addNewSite,
+                    tooltip: 'Añadir un nuevo sitio',
+                  ),
+                ],
               ),
-
               SizedBox(height: 20),
 
               // Botones para guardar, cancelar y añadir sitio
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
                     onPressed: saveProduct,
@@ -144,11 +154,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
                   ElevatedButton(
                     onPressed: cancelCreation,
                     child: Text('Cancelar'),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add),
-                    onPressed: addNewSite,
-                    tooltip: 'Añadir un nuevo sitio',
+
                   ),
                 ],
               ),

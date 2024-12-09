@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/Site.dart';
 import '../services/firebase_service.dart';
+import './AddSite.dart';
 
 class CreateProductPage extends StatefulWidget {
   final String listId;
@@ -76,38 +77,17 @@ class _CreateProductPageState extends State<CreateProductPage> {
     Navigator.pop(context);  // Volver a la página anterior sin guardar
   }
 
-  // Añadir un nuevo sitio (como en la página de editar)
+  // Añadir un nuevo sitio
   void addNewSite() {
-    TextEditingController siteController = TextEditingController();
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Añadir nuevo sitio"),
-          content: TextField(
-            controller: siteController,
-            decoration: InputDecoration(hintText: "Nombre del sitio"),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Cancelar"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text("Añadir"),
-              onPressed: () async {
-                if (siteController.text.isNotEmpty) {
-                  String siteId = await addSite(siteController.text);
-                  print("Nuevo sitio añadido con ID: $siteId");
-                  // Recarga los sitios para incluir el nuevo
-                  loadAvailableSites();
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
+        return AddSite(
+            onAdd: (String siteName) async {
+              String siteId = await addSite(siteName);
+              //print("Nuevo sitio añadido con ID: $siteId");
+              loadAvailableSites();
+            }
         );
       },
     );
@@ -148,7 +128,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: selectedSiteId.isEmpty ? null : selectedSiteId,
-                      decoration: InputDecoration(labelText: 'Seleccionar Sitiooo'),
+                      decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
                       items: availableSites.map((site) {
                         return DropdownMenuItem<String>(
                           value: site.id,
@@ -178,7 +158,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
                 ),
                 SizedBox(height: 20),
 
-                // Botones para guardar, cancelar y añadir sitio
+                // Botones para guardar, cancelar
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [

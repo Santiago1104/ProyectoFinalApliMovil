@@ -40,6 +40,11 @@ class _CreateProductPageState extends State<CreateProductPage> {
       setState(() {
         availableSites = sites;
       });
+
+      print("Sitios cargados:");
+      sites.forEach((site) {
+        print("ID: ${site.id}, Name: ${site.name}, Date: ${site.date}");
+      });
     } catch (e) {
       print("Error al cargar los sitios: $e");
     }
@@ -73,9 +78,39 @@ class _CreateProductPageState extends State<CreateProductPage> {
 
   // Añadir un nuevo sitio (como en la página de editar)
   void addNewSite() {
-    // Puedes redirigir a una página para crear un nuevo sitio o abrir un cuadro de diálogo
-    // Aquí solo mostramos un mensaje como ejemplo
-    print('Añadir un nuevo sitio');
+    TextEditingController siteController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Añadir nuevo sitio"),
+          content: TextField(
+            controller: siteController,
+            decoration: InputDecoration(hintText: "Nombre del sitio"),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Cancelar"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Añadir"),
+              onPressed: () async {
+                if (siteController.text.isNotEmpty) {
+                  String siteId = await addSite(siteController.text);
+                  print("Nuevo sitio añadido con ID: $siteId");
+                  // Recarga los sitios para incluir el nuevo
+                  loadAvailableSites();
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -113,7 +148,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: selectedSiteId.isEmpty ? null : selectedSiteId,
-                      decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
+                      decoration: InputDecoration(labelText: 'Seleccionar Sitiooo'),
                       items: availableSites.map((site) {
                         return DropdownMenuItem<String>(
                           value: site.id,
@@ -135,25 +170,25 @@ class _CreateProductPageState extends State<CreateProductPage> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.add),
-                    onPressed: addNewSite,
-                    tooltip: 'Añadir un nuevo sitio',
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
+                      icon: Icon(Icons.add),
+                      onPressed: addNewSite,
+                      tooltip: 'Añadir un nuevo sitio',
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
 
-              // Botones para guardar, cancelar y añadir sitio
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: saveProduct,
-                    child: Text('Guardar'),
-                  ),
-                  ElevatedButton(
-                    onPressed: cancelCreation,
-                    child: Text('Cancelar'),
+                // Botones para guardar, cancelar y añadir sitio
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: saveProduct,
+                      child: Text('Guardar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: cancelCreation,
+                      child: Text('Cancelar'),
 
                   ),
                 ],

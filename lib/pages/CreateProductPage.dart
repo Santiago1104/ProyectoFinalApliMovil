@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/Site.dart';
 import '../services/firebase_service.dart';
 import './AddSite.dart';
@@ -16,20 +16,24 @@ class CreateProductPage extends StatefulWidget {
 class _CreateProductPageState extends State<CreateProductPage> {
   late String productName;
   late String selectedSiteId;
+  late String siteName;
   final _formKey = GlobalKey<FormState>();
-  List<Site> availableSites = []; // Lista de sitios disponibles
+  List<Site> availableSites = []; // Lista para almacenar sitios disponibles
 
   @override
   void initState() {
     super.initState();
     productName = '';
     selectedSiteId = '';
-    loadAvailableSites();
+    siteName = '';
+    loadAvailableSites(); // Cargar sitios disponibles
   }
 
+  // Cargar todos los sitios disponibles
   Future<void> loadAvailableSites() async {
     try {
       QuerySnapshot siteSnapshot = await FirebaseFirestore.instance.collection('sitios').get();
+
       List<Site> sites = siteSnapshot.docs.map((doc) {
         return Site.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
       }).toList();
@@ -37,58 +41,55 @@ class _CreateProductPageState extends State<CreateProductPage> {
       setState(() {
         availableSites = sites;
       });
+
+      print("Sitios cargados:");
+      sites.forEach((site) {
+        print("ID: ${site.id}, Name: ${site.name}, Date: ${site.date}");
+      });
     } catch (e) {
       print("Error al cargar los sitios: $e");
     }
   }
 
+  // Guardar el nuevo producto
   void saveProduct() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await FirebaseFirestore.instance
-            .collection('lista_compras')
+        // Agregar el producto en Firestore
+        await FirebaseFirestore.instance.collection('lista_compras')
             .doc(widget.listId)
             .collection('elementoslista')
             .add({
-          'nombre': productName,
-          'id_sitio': selectedSiteId,
-          'fecha_registro': FieldValue.serverTimestamp(),
+          'nombre': productName, // Nombre del producto
+          'IdLista': widget.listId, // ID de la lista de compras
+          'fecha_registro': FieldValue.serverTimestamp(), // Marca de tiempo
+          'id_sitio': selectedSiteId, // ID del sitio seleccionado
+          'marcado': false, // Marcar el producto como 'true' de forma predeterminada
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Producto guardado exitosamente')),
-        );
-        Navigator.pop(context); // Volver a la página anterior
+        Navigator.pop(context);  // Volver a la página anterior
       } catch (e) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: Text('Error'),
-            content: Text('No se pudo guardar el producto. Inténtalo de nuevo.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cerrar'),
-              ),
-            ],
-          ),
-        );
+        print("Error al guardar el producto: $e");
       }
     }
   }
 
+  // Cancelar y regresar
+  void cancelCreation() {
+    Navigator.pop(context);  // Volver a la página anterior sin guardar
+  }
+
+  // Añadir un nuevo sitio
   void addNewSite() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AddSite(
-          onAdd: (String siteName) async {
-            String siteId = await addSite(siteName);
-            loadAvailableSites();
-            setState(() {
-              selectedSiteId = siteId;
-            });
-          },
+            onAdd: (String siteName) async {
+              String siteId = await addSite(siteName);
+              //print("Nuevo sitio añadido con ID: $siteId");
+              loadAvailableSites();
+            }
         );
       },
     );
@@ -107,6 +108,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Campo para el nombre del producto
               TextFormField(
                 decoration: InputDecoration(labelText: 'Nombre del Producto'),
                 onChanged: (value) {
@@ -121,34 +123,34 @@ class _CreateProductPageState extends State<CreateProductPage> {
                   return null;
                 },
               ),
-              SizedBox(height: 20),
-              availableSites.isEmpty
-                  ? Text('No hay sitios disponibles. Añade uno nuevo.')
-                  : DropdownButtonFormField<String>(
-                value: selectedSiteId.isEmpty ? null : selectedSiteId,
-                decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
-                items: availableSites.map((site) {
-                  return DropdownMenuItem<String>(
-                    value: site.id,
-                    child: Text(site.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedSiteId = value!;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor seleccione un sitio';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 10),
+
+              // Campo para el sitio donde se va a comprar el producto
               Row(
                 children: [
-                  Expanded(child: Container()),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedSiteId.isEmpty ? null : selectedSiteId,
+                      decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
+                      items: availableSites.map((site) {
+                        return DropdownMenuItem<String>(
+                          value: site.id,
+                          child: Text(site.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedSiteId = value!;
+                          siteName = availableSites.firstWhere((site) => site.id == value).name;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor seleccione un sitio';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
                   IconButton(
                     icon: Icon(Icons.add),
                     onPressed: addNewSite,
@@ -157,6 +159,8 @@ class _CreateProductPageState extends State<CreateProductPage> {
                 ],
               ),
               SizedBox(height: 20),
+
+              // Botones para guardar, cancelar
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -165,7 +169,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
                     child: Text('Guardar'),
                   ),
                   ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: cancelCreation,
                     child: Text('Cancelar'),
                   ),
                 ],

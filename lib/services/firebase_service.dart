@@ -1,30 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/Product.dart';
 import '../models/ShoppingList.dart';
+import '../models/Product.dart';
 import '../models/Site.dart';
 
 FirebaseFirestore database = FirebaseFirestore.instance;
 
-// Crear una lista
-Future<void> createNewList() async {
+Future<String> createNewList(String name) async {
   try {
-    await database.collection('lista_compras').add({
-      'FechaRegistro': DateTime.now().toIso8601String(),
+    DocumentReference docRef = await database.collection('lista_compras').add({
+      'nombre': name,
+      'FechaRegistro': DateTime.now(),
     });
-    print("Lista de compras creada.");
+    print("Lista de compras creada con ID: ${docRef.id}");
+    return docRef.id; // Retornar el ID del documento creado
   } catch (e) {
     print("Error al crear la lista de compras: $e");
+    throw e;
   }
 }
 
-// Leer todas las listas
-Stream<List<Map<String, dynamic>>> readLists() {
+
+
+// Leer todas las listas de compras
+Stream<List<ShoppingList>> readLists() {
   return database.collection('lista_compras').orderBy('FechaRegistro', descending: true).snapshots().map(
-        (snapshot) => snapshot.docs.map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>}).toList(),
+        (snapshot) => snapshot.docs.map((doc) => ShoppingList.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList(),
   );
 }
 
-// Actualizar lista
+// Actualizar una lista de compras
 Future<void> updateShoppingList(ShoppingList list) async {
   try {
     await database.collection('lista_compras').doc(list.id).update(list.toMap());
@@ -34,7 +38,7 @@ Future<void> updateShoppingList(ShoppingList list) async {
   }
 }
 
-// Eliminar lista
+// Eliminar una lista de compras
 Future<void> deleteShoppingList(String listId) async {
   try {
     await database.collection('lista_compras').doc(listId).delete();
@@ -44,35 +48,38 @@ Future<void> deleteShoppingList(String listId) async {
   }
 }
 
-// Crear producto
-Future<void> addProductToList(String idLista, String nombreProducto, String idSitio) async {
+// Crear un producto en una lista
+
+Future<void> addProductToList(String listId, String name, String siteId) async {
   try {
-    await database.collection('elementoslista').add({
-      'IdLista': idLista,
-      'Nombre': nombreProducto,
-      'IdSitio': idSitio,
+    await FirebaseFirestore.instance.collection('lista_compras').doc(listId).collection('elementoslista').add({
+      'nombre': name,
+      'id_sitio': siteId,
+      'marcado': false,
+      'fecha_registro': DateTime.now(),
+      'IdLista': listId, // Aseguramos que el listId se almacene
     });
-    print("Producto añadido a la lista.");
+    print("Producto añadido a la lista con listId: $listId");
   } catch (e) {
     print("Error al añadir el producto: $e");
   }
 }
 
-// Leer productos de lista
+// Leer productos de una lista
 Stream<List<Product>> readProducts(String listId) {
-  return database.collection('lista_compras').doc(listId).collection('elementos').snapshots().map((snapshot) {
+  return database.collection('lista_compras').doc(listId).collection('elementoslista').snapshots().map((snapshot) {
     return snapshot.docs.map((doc) {
       return Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
     }).toList();
   });
 }
 
-// Actualizar producto
-Future<void> updateProduct(String idProducto, String nuevoNombre, String nuevoIdSitio) async {
+// Actualizar un producto
+Future<void> updateProduct(String productId, String listId, String name, String siteId) async {
   try {
-    await database.collection('elementoslista').doc(idProducto).update({
-      'Nombre': nuevoNombre,
-      'IdSitio': nuevoIdSitio,
+    await database.collection('lista_compras').doc(listId).collection('elementoslista').doc(productId).update({
+      'nombre': name,
+      'id_sitio': siteId,
     });
     print("Producto actualizado.");
   } catch (e) {
@@ -80,31 +87,32 @@ Future<void> updateProduct(String idProducto, String nuevoNombre, String nuevoId
   }
 }
 
-// Eliminar producto
-Future<void> deleteProduct(String idProducto) async {
+// Eliminar un producto
+Future<void> deleteProduct(String productId, String listId) async {
   try {
-    await database.collection('elementoslista').doc(idProducto).delete();
+    await database.collection('lista_compras').doc(listId).collection('elementoslista').doc(productId).delete();
     print("Producto eliminado.");
   } catch (e) {
     print("Error al eliminar el producto: $e");
   }
 }
 
-// Crear un sitio
-Future<void> addSite(String nombreSitio) async {
+// Crear un nuevo sitio
+Future<String> addSite(String name) async {
   try {
-    Site newSite = Site(
-      id: '',
-      name: nombreSitio,
-      date: DateTime.now(),
-    );
-
-    await database.collection('sitios').add(newSite.toMap());
-    print("Sitio registrado.");
+    DocumentReference docRef = await database.collection('sitios').add({
+      'nombre': name,
+      'fecha_registro': DateTime.now(),
+    });
+    print("Sitio registrado con ID: ${docRef.id}");
+    return docRef.id; // Retornar el ID del documento creado
   } catch (e) {
     print("Error al registrar el sitio: $e");
+    throw e;
   }
 }
+
+
 
 // Leer todos los sitios
 Stream<List<Site>> readSites() {
@@ -112,7 +120,7 @@ Stream<List<Site>> readSites() {
       .orderBy('fecha_registro', descending: true)
       .snapshots()
       .map((snapshot) => snapshot.docs
-      .map((doc) => Site.fromFirestore(doc.data(), doc.id))
+      .map((doc) => Site.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
       .toList());
 }
 
@@ -133,45 +141,5 @@ Future<void> deleteSite(String siteId) async {
     print("Sitio eliminado.");
   } catch (e) {
     print("Error al eliminar el sitio: $e");
-  }
-}
-
-// Clonar una lista
-Future<void> cloneShoppingList(String listId) async {
-  try {
-    // Leer la lista original
-    DocumentSnapshot listSnapshot = await database.collection('lista_compras').doc(listId).get();
-
-    if (!listSnapshot.exists) {
-      print("La lista no existe.");
-      return;
-    }
-
-    // Crear una nueva lista con la misma información
-    var originalList = listSnapshot.data() as Map<String, dynamic>;
-    DocumentReference newListRef = await database.collection('lista_compras').add({
-      'FechaRegistro': DateTime.now().toIso8601String(),
-    });
-
-    // Leer los productos de la lista original
-    QuerySnapshot productSnapshot = await database
-        .collection('lista_compras')
-        .doc(listId)
-        .collection('elementos')
-        .get();
-
-    // Clonar cada producto en la nueva lista
-    for (var productDoc in productSnapshot.docs) {
-      var productData = productDoc.data() as Map<String, dynamic>;
-      await database
-          .collection('lista_compras')
-          .doc(newListRef.id)
-          .collection('elementos')
-          .add(productData);
-    }
-
-    print("Lista clonada exitosamente.");
-  } catch (e) {
-    print("Error al clonar la lista: $e");
   }
 }

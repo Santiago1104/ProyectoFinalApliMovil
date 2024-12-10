@@ -1,38 +1,60 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Product {
-  final String id; // Identificador único del producto
-  final String name; // Nombre del producto
-  final String siteId; // ID del sitio donde se compra
-  final bool isChecked; // Si el producto está marcado como comprado
-  final DateTime date; // Fecha de creación
+  final String id;
+  final String name;
+  final String siteId;
+  final String listId;
+  bool isChecked;
+  final DateTime date;
 
   Product({
     required this.id,
     required this.name,
     required this.siteId,
+    required this.listId,
     required this.isChecked,
     required this.date,
   });
 
-  // Convertir un documento Firestore a una instancia de Product
   factory Product.fromFirestore(Map<String, dynamic> data, String id) {
     return Product(
       id: id,
       name: data['nombre'] ?? '',
-      siteId: data['id_sitio'] ?? '', // snake_case para id_sitio
+      siteId: data['id_sitio'] ?? '',
+      listId: data['IdLista'] ?? '',
       isChecked: data['marcado'] ?? false,
-      date: (data['fecha_registro'] as Timestamp).toDate(), // snake_case para fecha_registro
+      date: (data['fecha_registro'] != null)
+          ? (data['fecha_registro'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 
-  // Convertir una instancia de Product a un mapa para Firestore
   Map<String, dynamic> toMap() {
     return {
       'nombre': name,
-      'id_sitio': siteId, // snake_case para id_sitio
+      'id_sitio': siteId,
+      'IdLista': listId,
       'marcado': isChecked,
-      'fecha_registro': date, // snake_case para fecha_registro
+      'fecha_registro': date,
     };
+  }
+
+  Future<void> toggleChecked() async {
+    if (listId.isNotEmpty && id.isNotEmpty) {
+      isChecked = !isChecked;
+      try {
+        await FirebaseFirestore.instance
+            .collection('lista_compras')
+            .doc(listId)
+            .collection('elementoslista')
+            .doc(id)
+            .update({'marcado': isChecked});
+        print("Estado de marcado actualizado a $isChecked");
+      } catch (e) {
+        print("Error al actualizar el estado de marcado: $e");
+      }
+    } else {
+      print('Error: listId o id está vacío.');
+    }
   }
 }

@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
+import '../pages/CRUDTestPage.dart';
+import '../pages/ShoppingListPage.dart';
+
+// Importaciones de Firebase
 import 'package:firebase_core/firebase_core.dart';
-import 'package:proyecto_final/ui/screens/add_item.dart';
-import 'firebase_options.dart';  // Asegúrate de que este archivo exista
-
-
-import 'models/ShoppingList.dart';  // Asegúrate de importar AddItemScreen
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializar Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
   runApp(const MyApp());
 }
 
@@ -23,17 +20,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Shopping List Tracker',
+      title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: 'Shopping List Tracker'),
       routes: {
-        '/add-item': (context) => AddItemScreen( // Ruta a la pantalla de agregar producto
-          shoppingList: ShoppingList(id: '1', name: 'Lista de Compras', date: DateTime.now()),
-        ),
-        // Agrega otras rutas si es necesario
+        '/crud-test': (context) => CRUDTestPage(), // Ruta para la página CRUD
+        '/shopping-list': (context) =>ShoppingListPage(), // Ruta para la lista de compras
       },
     );
   }
@@ -57,23 +52,15 @@ class MyHomePage extends StatelessWidget {
           children: <Widget>[
             ElevatedButton(
               onPressed: () {
-                // Navegar a la Lista de Sitios (deberías tener una pantalla para ello)
-                Navigator.pushNamed(context, '/site-list');
+                // Navegar a la página de la lista de compras
+                Navigator.pushNamed(context, '/shopping-list');
               },
-              child: const Text('Ir a la Lista de Sitios'),
+              child: const Text('Ir a la Lista de Compras'),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 20), // Espacio entre botones
             ElevatedButton(
               onPressed: () {
-                // Navegar a la pantalla de agregar/editar producto
-                Navigator.pushNamed(context, '/add-item');
-              },
-              child: const Text('Ir a la Pantalla de Agregar Producto'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Navegar a la página de prueba CRUD (si la tienes)
+                // Navegar a la página de prueba CRUD
                 Navigator.pushNamed(context, '/crud-test');
               },
               child: const Text('Ir a la Página de CRUD'),
@@ -83,5 +70,4 @@ class MyHomePage extends StatelessWidget {
       ),
     );
   }
-
 }

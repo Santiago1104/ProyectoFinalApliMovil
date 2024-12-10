@@ -60,6 +60,47 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
+  // Clonar lista
+  Future<void> cloneList(String listId, String listName) async {
+    try {
+      if (listName.isEmpty) {
+        throw 'El nombre de la lista no puede estar vacío.';
+      }
+
+      // Obtener los productos de la lista original
+      final productSnapshot = await FirebaseFirestore.instance
+          .collection('lista_compras')
+          .doc(listId)
+          .collection('elementoslista')
+          .get();
+
+      // Crear una nueva lista clonada
+      final newListDoc = await FirebaseFirestore.instance.collection('lista_compras').add({
+        'Nombre': listName, // Usar el nombre proporcionado
+        'FechaRegistro': DateTime.now(),
+      });
+
+      // Clonar los productos en la nueva lista
+      for (var productDoc in productSnapshot.docs) {
+        await FirebaseFirestore.instance
+            .collection('lista_compras')
+            .doc(newListDoc.id)
+            .collection('elementoslista')
+            .add(productDoc.data());
+      }
+
+      // Notificación de éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lista "$listName" clonada con éxito.')),
+      );
+    } catch (e) {
+      print('Error al clonar la lista: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al clonar la lista.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -186,6 +227,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                           );
                         },
                         child: Text('Añadir Producto'),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(
+                        onPressed: () => cloneList(shoppingList.id, shoppingList.name),
+                        child: Text('Clonar Lista'),
                       ),
                     ),
                   ],

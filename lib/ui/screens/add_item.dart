@@ -50,7 +50,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
         name: _nameController.text,
         siteId: _selectedSiteId,
         isChecked: _isChecked,
-        date: DateTime.now(),
+        date: DateTime.now(), listId: '',
       );
 
       await FirebaseFirestore.instance

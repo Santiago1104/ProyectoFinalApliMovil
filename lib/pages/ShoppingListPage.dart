@@ -18,8 +18,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         .collection('lista_compras')
         .orderBy('FechaRegistro', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ShoppingList.fromFirestore(
+        .map((snapshot) =>
+        snapshot.docs
+            .map((doc) =>
+            ShoppingList.fromFirestore(
                 doc.data() as Map<String, dynamic>, doc.id))
             .toList());
   }
@@ -30,8 +32,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         .doc(listId)
         .collection('elementoslista')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Product.fromFirestore(
+        .map((snapshot) =>
+        snapshot.docs
+            .map((doc) =>
+            Product.fromFirestore(
                 doc.data() as Map<String, dynamic>, doc.id))
             .toList());
   }
@@ -79,7 +83,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
       // Crear una nueva lista clonada
       final newListDoc =
-          await FirebaseFirestore.instance.collection('lista_compras').add({
+      await FirebaseFirestore.instance.collection('lista_compras').add({
         'nombre': listName,
         // Guardar correctamente el nombre con la clave consistente
         'FechaRegistro': DateTime.now(),
@@ -105,10 +109,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
-  Future<void> showCloneDialog(
-      String originalListId, String originalListName) async {
+//mensaje para cmabiar el nombre a la lista clonada
+  Future<void> showCloneDialog(String originalListId,
+      String originalListName) async {
     final TextEditingController nameController =
-        TextEditingController(text: 'Copia de $originalListName');
+    TextEditingController(text: 'Copia de $originalListName');
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -144,6 +149,71 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       },
     );
   }
+// Eliminar lista con confirmación
+  void deleteListWithConfirmation(String listId) async {
+    bool confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmar eliminación'),
+          content: Text('¿Estás seguro de que deseas eliminar esta lista?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // Cancelar
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Confirmar
+              },
+              child: Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    ) ?? false; // Si el valor es null, considerar como 'false'
+
+    // Eliminar la lista si el usuario confirma
+    if (confirm) {
+      try {
+        // Eliminar todos los productos dentro de la lista
+        final productSnapshot = await FirebaseFirestore.instance
+            .collection('lista_compras')
+            .doc(listId)
+            .collection('elementoslista')
+            .get();
+
+        for (var productDoc in productSnapshot.docs) {
+          await FirebaseFirestore.instance
+              .collection('lista_compras')
+              .doc(listId)
+              .collection('elementoslista')
+              .doc(productDoc.id)
+              .delete();
+        }
+
+        // Eliminar la lista de compras
+        await FirebaseFirestore.instance
+            .collection('lista_compras')
+            .doc(listId)
+            .delete();
+
+        // Mensaje de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lista eliminada con éxito.')),
+        );
+      } catch (e) {
+        print('Error al eliminar la lista: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al eliminar la lista.')),
+        );
+      }
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -299,6 +369,17 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                         child: Text('Clonar Lista'),
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          deleteListWithConfirmation(shoppingList.id); // Llamada a la función con confirmación
+                        },
+                        child: Text('Eliminar Lista'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      ),
+                    )
+
                   ],
                 );
               },

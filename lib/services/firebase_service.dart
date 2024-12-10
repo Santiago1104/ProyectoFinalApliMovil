@@ -12,7 +12,7 @@ Future<String> createNewList(String name) async {
       'FechaRegistro': DateTime.now(),
     });
     print("Lista de compras creada con ID: ${docRef.id}");
-    return docRef.id; // Retornar el ID del documento creado
+    return docRef.id;
   } catch (e) {
     print("Error al crear la lista de compras: $e");
     throw e;
@@ -57,7 +57,7 @@ Future<void> addProductToList(String listId, String name, String siteId) async {
       'id_sitio': siteId,
       'marcado': false,
       'fecha_registro': DateTime.now(),
-      'IdLista': listId, // Aseguramos que el listId se almacene
+      'IdLista': listId,
     });
     print("Producto añadido a la lista con listId: $listId");
   } catch (e) {
@@ -88,14 +88,20 @@ Future<void> updateProduct(String productId, String listId, String name, String 
 }
 
 // Eliminar un producto
-Future<void> deleteProduct(String productId, String listId) async {
+Future<void> deleteProduct(String listId, String productId) async {
   try {
-    await database.collection('lista_compras').doc(listId).collection('elementoslista').doc(productId).delete();
-    print("Producto eliminado.");
+    await FirebaseFirestore.instance
+        .collection('lista_compras')
+        .doc(listId)
+        .collection('elementoslista')
+        .doc(productId)
+        .delete();
+    print("Producto eliminado exitosamente.");
   } catch (e) {
     print("Error al eliminar el producto: $e");
   }
 }
+
 
 // Crear un nuevo sitio
 Future<String> addSite(String name) async {

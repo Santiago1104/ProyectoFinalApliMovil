@@ -75,9 +75,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           .collection('elementoslista')
           .get();
 
-      // Crear una nueva lista clonada
+      // Crear una nueva lista clonada con el nombre proporcionado
       final newListDoc = await FirebaseFirestore.instance.collection('lista_compras').add({
-        'Nombre': listName, // Usar el nombre proporcionado
+        'nombre': listName, // Guardar correctamente el nombre con la clave consistente
         'FechaRegistro': DateTime.now(),
       });
 
@@ -90,7 +90,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             .add(productDoc.data());
       }
 
-      // Notificación de éxito
+      // Mostrar un mensaje de éxito con el nuevo nombre
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lista "$listName" clonada con éxito.')),
       );
@@ -101,6 +101,48 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       );
     }
   }
+
+  Future<void> showCloneDialog(String originalListId, String originalListName) async {
+    final TextEditingController nameController = TextEditingController(text: 'Copia de $originalListName');
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Clonar Lista'),
+          content: TextField(
+            controller: nameController,
+            decoration: InputDecoration(labelText: 'Nuevo nombre de la lista'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar el diálogo
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newName = nameController.text.trim();
+                if (newName.isNotEmpty) {
+                  await cloneList(originalListId, newName);
+                  Navigator.of(context).pop(); // Cerrar el diálogo
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('El nombre no puede estar vacío.')),
+                  );
+                }
+              },
+              child: Text('Clonar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +285,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
-                        onPressed: () => cloneList(shoppingList.id, shoppingList.name),
+                        onPressed: () => showCloneDialog(shoppingList.id, shoppingList.name),
                         child: Text('Clonar Lista'),
                       ),
                     ),

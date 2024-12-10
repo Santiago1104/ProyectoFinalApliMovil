@@ -5,6 +5,7 @@ import '../models/Product.dart';
 import '../models/Site.dart';
 import 'EditProductPage.dart';  // Importa la nueva página
 import 'CreateProductPage.dart';  // Asegúrate de importar esta página
+import 'CreateShoppingListModal.dart';  // Importar la nueva ventana modal
 
 class ShoppingListPage extends StatefulWidget {
   @override
@@ -65,6 +66,17 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Listas de Compras'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => CreateShoppingListModal(),
+              );
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<List<ShoppingList>>(
         stream: readLists(),
@@ -103,7 +115,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                             itemCount: products.length,
                             itemBuilder: (context, index) {
                               final product = products[index];
-                              return FutureBuilder<Site?>(  // Cargar detalles del sitio
+                              return FutureBuilder<Site?>(
                                 future: getSiteDetails(product.siteId),
                                 builder: (context, siteSnapshot) {
                                   if (siteSnapshot.hasError) {
@@ -175,12 +187,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          // Redirigir al usuario a la página de creación de producto
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => CreateProductPage(
-                                listId: shoppingList.id, // Pasamos el ID de la lista
+                                listId: shoppingList.id,
                               ),
                             ),
                           );

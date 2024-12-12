@@ -409,17 +409,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                         child: Text('Clonar Lista'),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          deleteListWithConfirmation(shoppingList.id); // Llamada a la función con confirmación
-                        },
-                        child: Text('Eliminar Lista'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      ),
-                    )
-
                   ],
                 );
               },

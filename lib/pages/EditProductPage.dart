@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/Product.dart';
 import '../models/Site.dart';
 import '../services/firebase_service.dart';
+import 'AddSite.dart';
 
 class EditProductPage extends StatefulWidget {
   final String listId;
@@ -20,7 +21,7 @@ class _EditProductPageState extends State<EditProductPage> {
   late String siteName;
   final _formKey = GlobalKey<FormState>();
   List<Site> availableSites = [];
-  String? selectedSiteId;
+  late String selectedSiteId;
 
   @override
   void initState() {
@@ -124,8 +125,20 @@ class _EditProductPageState extends State<EditProductPage> {
     Navigator.pop(context);
   }
 
-  void addNewSite() async {
-    print('Añadir un nuevo sitio');
+  // Añadir un nuevo sitio
+  void addNewSite() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AddSite(
+            onAdd: (String siteName) async {
+              String siteId = await addSite(siteName);
+              //print("Nuevo sitio añadido con ID: $siteId");
+              loadAvailableSites();
+            }
+        );
+      },
+    );
   }
 
   @override
@@ -151,29 +164,39 @@ class _EditProductPageState extends State<EditProductPage> {
                   return null;
                 },
               ),
-              DropdownButtonFormField<String>(
-                value: selectedSiteId,
-                decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
-                items: availableSites.map((site) {
-                  return DropdownMenuItem<String>(
-                    value: site.id,
-                    child: Text(site.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedSiteId = value!;
-                    siteName = availableSites
-                        .firstWhere((site) => site.id == value)
-                        .name;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor seleccione un sitio';
-                  }
-                  return null;
-                },
+              // Campo para el sitio donde se va a comprar el producto
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedSiteId.isEmpty ? null : selectedSiteId,
+                      decoration: InputDecoration(labelText: 'Seleccionar Sitio'),
+                      items: availableSites.map((site) {
+                        return DropdownMenuItem<String>(
+                          value: site.id,
+                          child: Text(site.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedSiteId = value!;
+                          siteName = availableSites.firstWhere((site) => site.id == value).name;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor seleccione un sitio';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: addNewSite,
+                    tooltip: 'Añadir un nuevo sitio',
+                  ),
+                ],
               ),
               SizedBox(height: 20),
               Row(
@@ -186,11 +209,6 @@ class _EditProductPageState extends State<EditProductPage> {
                   ElevatedButton(
                     onPressed: cancelChanges,
                     child: Text('Cancelar'),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add),
-                    onPressed: addNewSite,
-                    tooltip: 'Añadir un nuevo sitio',
                   ),
                 ],
               ),

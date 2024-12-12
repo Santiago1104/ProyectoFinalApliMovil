@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/Site.dart';
 import '../services/firebase_service.dart';
 import 'AddSite.dart';
+import '../services/validate_service.dart';
 
 class ManageSitesPage extends StatefulWidget {
   @override
@@ -10,6 +11,7 @@ class ManageSitesPage extends StatefulWidget {
 
 class _ManageSitesPageState extends State<ManageSitesPage> {
   final TextEditingController _siteNameController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -77,9 +79,13 @@ class _ManageSitesPageState extends State<ManageSitesPage> {
       builder: (context) {
         return AlertDialog(
           title: Text('Editar Sitio'),
-          content: TextField(
-            controller: _siteNameController,
-            decoration: InputDecoration(hintText: "Nombre del sitio"),
+          content: Form(
+            key: _formKey,
+            child: TextFormField(
+              controller: _siteNameController,
+              decoration: InputDecoration(hintText: "Nombre del sitio"),
+              validator: validate_service.validateSiteName,
+            ),
           ),
           actions: <Widget>[
             TextButton(
@@ -92,7 +98,7 @@ class _ManageSitesPageState extends State<ManageSitesPage> {
             TextButton(
               child: Text('Actualizar'),
               onPressed: () {
-                if (_siteNameController.text.isNotEmpty) {
+                if (_formKey.currentState!.validate()) {
                   Site updatedSite = Site(
                       id: site.id,
                       name: _siteNameController.text,

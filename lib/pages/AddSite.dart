@@ -1,19 +1,39 @@
 import 'package:flutter/material.dart';
+import '../services/validate_service.dart';
 
-class AddSite extends StatelessWidget {
-  final Function(String) onAdd; // Callback function to handle the addition
+
+class AddSite extends StatefulWidget {
+  final Function(String) onAdd;
 
   AddSite({required this.onAdd});
 
   @override
-  Widget build(BuildContext context) {
-    TextEditingController siteController = TextEditingController();
+  _AddSiteState createState() => _AddSiteState();
+}
 
+class _AddSiteState extends State<AddSite> {
+  final TextEditingController siteController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); 
+
+  void _tryAddSite() {
+    // Retorna true si el formulario es válido
+    if (_formKey.currentState?.validate() ?? false) {
+      widget.onAdd(siteController.text);  // Use the callback function
+      Navigator.of(context).pop();  // Close the dialog
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return AlertDialog(
       title: Text("Añadir nuevo sitio"),
-      content: TextField(
-        controller: siteController,
-        decoration: InputDecoration(hintText: "Nombre del sitio"),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: siteController,
+          decoration: InputDecoration(hintText: "Nombre del sitio"),
+          validator: validate_service.validateSiteName,
+        ),
       ),
       actions: <Widget>[
         TextButton(
@@ -22,12 +42,7 @@ class AddSite extends StatelessWidget {
         ),
         TextButton(
           child: Text("Añadir"),
-          onPressed: () {
-            if (siteController.text.isNotEmpty) {
-              onAdd(siteController.text); // Use the callback function
-              Navigator.of(context).pop();
-            }
-          },
+          onPressed: _tryAddSite,  // Usa el nuevo método que valida el formulario
         ),
       ],
     );

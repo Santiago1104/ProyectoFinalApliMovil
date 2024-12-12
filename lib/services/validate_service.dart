@@ -4,7 +4,7 @@ import '../models/Product.dart';
 import '../models/ShoppingList.dart';
 import '../models/Site.dart';
 
-class _validate_service {
+class validate_service {
   final TextEditingController _listNameController = TextEditingController();
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _siteNameController = TextEditingController();
@@ -38,22 +38,17 @@ class _validate_service {
     return null;
   }
 
-  String? validateSiteName(String? value) {
+  static String? validateSiteName(String? value) {
     if (value == null || value.isEmpty) {
       return 'El nombre del sitio es obligatorio';
     }
-
-    if (value.length < 3 || value.length > 50) {
-      return 'El nombre debe tener entre 3 y 50 caracteres';
+    if (value.length < 2 || value.length > 50) {
+      return 'El nombre debe tener entre 2 y 50 caracteres';
     }
-
-    // Verificar que no tenga caracteres especiales
-    final regex = RegExp(
-        r'^[a-zA-Z0-9 ]*$'); // Permite solo letras, números y espacios
+    final regex = RegExp(r'^[a-zA-Z0-9 ]+$');
     if (!regex.hasMatch(value)) {
-      return 'El nombre solo puede contener letras, números y espacios';
+      return 'Solo se permiten letras, números y espacios';
     }
-
     return null;
   }
 

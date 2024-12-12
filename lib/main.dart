@@ -23,6 +23,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Color(0xFF9c8def),
+        ),
       ),
       home: ShoppingListPage(),
       routes: {

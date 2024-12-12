@@ -5,7 +5,8 @@ import '../models/Product.dart';
 import '../models/Site.dart';
 import 'EditProductPage.dart'; // Importa la nueva página
 import 'CreateProductPage.dart'; // Asegúrate de importar esta página
-import 'CreateShoppingListModal.dart'; // Importar la nueva ventana modal
+import 'CreateShoppingListModal.dart';
+import 'ManageSitesPage.dart'; // Importar la nueva ventana modal
 
 class ShoppingListPage extends StatefulWidget {
   @override
@@ -232,6 +233,45 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           ),
         ],
       ),
+
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Color(0xFF9c8def),
+              ),
+              child: Text(
+                'Menú',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.home),
+              title: Text('Inicio'),
+              onTap: () {
+                Navigator.of(context).pop(); // Cierra el Drawer
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.store),
+              title: Text('Administrar Sitios'),
+              onTap: () {
+                Navigator.of(context).pop(); // Cierra el Drawer
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => ManageSitesPage()),
+                );
+              },
+            ),
+            // Agregar más elementos según sea necesario
+          ],
+        ),
+      ),
+
       body: StreamBuilder<List<ShoppingList>>(
         stream: readLists(),
         builder: (context, listSnapshot) {

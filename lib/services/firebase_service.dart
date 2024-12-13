@@ -67,12 +67,19 @@ Future<void> addProductToList(String listId, String name, String siteId) async {
 
 // Leer productos de una lista
 Stream<List<Product>> readProducts(String listId) {
-  return database.collection('lista_compras').doc(listId).collection('elementoslista').snapshots().map((snapshot) {
-    return snapshot.docs.map((doc) {
-      return Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
-    }).toList();
-  });
+  return FirebaseFirestore.instance
+      .collection('lista_compras')
+      .doc(listId)
+      .collection('elementoslista')
+      .snapshots()
+      .map((snapshot) =>
+      snapshot.docs
+          .map((doc) =>
+          Product.fromFirestore(
+              doc.data() as Map<String, dynamic>, doc.id))
+          .toList());
 }
+
 
 // Actualizar un producto
 Future<void> updateProduct(String productId, String listId, String name, String siteId) async {
@@ -87,18 +94,14 @@ Future<void> updateProduct(String productId, String listId, String name, String 
   }
 }
 
-// Eliminar un producto
-Future<void> deleteProduct(String listId, String productId) async {
-  try {
+void deleteProduct(String listId, String productId) async {
+  if (listId.isNotEmpty && productId.isNotEmpty) {
     await FirebaseFirestore.instance
         .collection('lista_compras')
         .doc(listId)
         .collection('elementoslista')
         .doc(productId)
         .delete();
-    print("Producto eliminado exitosamente.");
-  } catch (e) {
-    print("Error al eliminar el producto: $e");
   }
 }
 
@@ -130,6 +133,22 @@ Stream<List<Site>> readSites() {
       .toList());
 }
 
+Future<Site?> getSiteDetails(String siteId) async {
+  try {
+    DocumentSnapshot doc = await FirebaseFirestore.instance
+        .collection('sitios')
+        .doc(siteId)
+        .get();
+
+    if (doc.exists) {
+      return Site.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+    }
+  } catch (e) {
+    print("Error al obtener detalles del sitio: $e");
+  }
+  return null;
+}
+
 // Actualizar un sitio
 Future<void> updateSite(Site site) async {
   try {
@@ -149,3 +168,5 @@ Future<void> deleteSite(String siteId) async {
     print("Error al eliminar el sitio: $e");
   }
 }
+
+

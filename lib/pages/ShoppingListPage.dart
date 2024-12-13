@@ -3,10 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/ShoppingList.dart';
 import '../models/Product.dart';
 import '../models/Site.dart';
-import 'EditProductPage.dart'; // Importa la nueva página
-import 'CreateProductPage.dart'; // Asegúrate de importar esta página
-import 'CreateShoppingListModal.dart'; // Importar la nueva ventana modal
+import 'EditProductPage.dart';
+import 'CreateProductPage.dart';
+import 'CreateShoppingListModal.dart';
 import 'CloneListModal.dart';
+import '../services/firebase_service.dart';
 class ShoppingListPage extends StatefulWidget {
   @override
   _ShoppingListPageState createState() => _ShoppingListPageState();
@@ -24,47 +25,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             ShoppingList.fromFirestore(
                 doc.data() as Map<String, dynamic>, doc.id))
             .toList());
-  }
-
-  Stream<List<Product>> readProducts(String listId) {
-    return FirebaseFirestore.instance
-        .collection('lista_compras')
-        .doc(listId)
-        .collection('elementoslista')
-        .snapshots()
-        .map((snapshot) =>
-        snapshot.docs
-            .map((doc) =>
-            Product.fromFirestore(
-                doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
-  }
-
-  Future<Site?> getSiteDetails(String siteId) async {
-    try {
-      DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('sitios')
-          .doc(siteId)
-          .get();
-
-      if (doc.exists) {
-        return Site.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
-      }
-    } catch (e) {
-      print("Error al obtener detalles del sitio: $e");
-    }
-    return null;
-  }
-
-  void deleteProduct(String listId, String productId) async {
-    if (listId.isNotEmpty && productId.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('lista_compras')
-          .doc(listId)
-          .collection('elementoslista')
-          .doc(productId)
-          .delete();
-    }
   }
 
 // Eliminar lista con confirmación

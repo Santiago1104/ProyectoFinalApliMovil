@@ -5,9 +5,8 @@ import '../models/Product.dart';
 import '../models/Site.dart';
 import 'EditProductPage.dart'; // Importa la nueva página
 import 'CreateProductPage.dart'; // Asegúrate de importar esta página
-import 'CreateShoppingListModal.dart';
-import 'ManageSitesPage.dart'; // Importar la nueva ventana modal
-
+import 'CreateShoppingListModal.dart'; // Importar la nueva ventana modal
+import 'CloneListModal.dart';
 class ShoppingListPage extends StatefulWidget {
   @override
   _ShoppingListPageState createState() => _ShoppingListPageState();
@@ -68,88 +67,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
-  // Clonar lista
-  Future<void> cloneList(String listId, String listName) async {
-    try {
-      if (listName.isEmpty) {
-        throw 'El nombre de la lista no puede estar vacío.';
-      }
-
-      // Obtener los productos de la lista original
-      final productSnapshot = await FirebaseFirestore.instance
-          .collection('lista_compras')
-          .doc(listId)
-          .collection('elementoslista')
-          .get();
-
-      // Crear una nueva lista clonada
-      final newListDoc =
-      await FirebaseFirestore.instance.collection('lista_compras').add({
-        'nombre': listName,
-        // Guardar correctamente el nombre con la clave consistente
-        'FechaRegistro': DateTime.now(),
-      });
-
-      // Clonar los productos en la nueva lista
-      for (var productDoc in productSnapshot.docs) {
-        await FirebaseFirestore.instance
-            .collection('lista_compras')
-            .doc(newListDoc.id)
-            .collection('elementoslista')
-            .add(productDoc.data());
-      }
-      // Mostrar un mensaje de éxito con el nuevo nombre
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lista "$listName" clonada con éxito.')),
-      );
-    } catch (e) {
-      print('Error al clonar la lista: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al clonar la lista.')),
-      );
-    }
-  }
-
-//mensaje para cmabiar el nombre a la lista clonada
-  Future<void> showCloneDialog(String originalListId,
-      String originalListName) async {
-    final TextEditingController nameController =
-    TextEditingController(text: 'Copia de $originalListName');
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Clonar Lista'),
-          content: TextField(
-            controller: nameController,
-            decoration: InputDecoration(labelText: 'Nuevo nombre de la lista'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
-              },
-              child: Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final newName = nameController.text.trim();
-                if (newName.isNotEmpty) {
-                  await cloneList(originalListId, newName);
-                  Navigator.of(context).pop(); // Cerrar el diálogo
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('El nombre no puede estar vacío.')),
-                  );
-                }
-              },
-              child: Text('Clonar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 // Eliminar lista con confirmación
   void deleteListWithConfirmation(String listId) async {
     bool confirm = await showDialog<bool>(
@@ -176,10 +93,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       },
     ) ?? false; // Si el valor es null, considerar como 'false'
 
-    // Eliminar la lista si el usuario confirma
+// Eliminar la lista si el usuario confirma
     if (confirm) {
       try {
-        // Eliminar todos los productos dentro de la lista
+// Eliminar todos los productos dentro de la lista
         final productSnapshot = await FirebaseFirestore.instance
             .collection('lista_compras')
             .doc(listId)
@@ -195,13 +112,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
               .delete();
         }
 
-        // Eliminar la lista de compras
+// Eliminar la lista de compras
         await FirebaseFirestore.instance
             .collection('lista_compras')
             .doc(listId)
             .delete();
 
-        // Mensaje de éxito
+// Mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Lista eliminada con éxito.')),
         );
@@ -213,7 +130,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       }
     }
   }
-
 
 
   @override
@@ -233,45 +149,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           ),
         ],
       ),
-
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color(0xFF9c8def),
-              ),
-              child: Text(
-                'Menú',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.home),
-              title: Text('Inicio'),
-              onTap: () {
-                Navigator.of(context).pop(); // Cierra el Drawer
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.store),
-              title: Text('Administrar Sitios'),
-              onTap: () {
-                Navigator.of(context).pop(); // Cierra el Drawer
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => ManageSitesPage()),
-                );
-              },
-            ),
-            // Agregar más elementos según sea necesario
-          ],
-        ),
-      ),
-
       body: StreamBuilder<List<ShoppingList>>(
         stream: readLists(),
         builder: (context, listSnapshot) {
@@ -318,7 +195,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                     return ListTile(
                                       title: Text(product.name),
                                       subtitle:
-                                          Text('Error al cargar el sitio'),
+                                      Text('Error al cargar el sitio'),
                                     );
                                   } else if (siteSnapshot.hasData) {
                                     final site = siteSnapshot.data!;
@@ -364,9 +241,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                             MaterialPageRoute(
                                               builder: (context) =>
                                                   EditProductPage(
-                                                listId: shoppingList.id,
-                                                productId: product.id,
-                                              ),
+                                                    listId: shoppingList.id,
+                                                    productId: product.id,
+                                                  ),
                                             ),
                                           );
                                         },
@@ -404,11 +281,29 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
-                        onPressed: () =>
-                            showCloneDialog(shoppingList.id, shoppingList.name),
-                        child: Text('Clonar Lista'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CloneListModal(shoppingList: shoppingList),
+                            ),
+                          );
+                        },
+                        child: const Text('Clonar Lista'),
                       ),
                     ),
+
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          deleteListWithConfirmation(shoppingList.id); // Llamada a la función con confirmación
+                        },
+                        child: Text('Eliminar Lista'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      ),
+                    )
+
                   ],
                 );
               },
